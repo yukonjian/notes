@@ -1,0 +1,68 @@
+.本地仓库操作
+
+1.在本地创建仓库
+	git init
+2.添加文件到仓库
+	git add native.c			//只是将文件添加到一个临时空间里，commit命令才会正式提交到创库中
+	git add -A						//.gitignore（*.o  *.class)文件指定的除外
+3.将临时空间中的内容存入仓库
+	git commit -m "add files to storehouse"
+4.查看已经提交的记录
+	git log --pretty=oneline
+5.给某个记录/版本号打个标签
+	git tag v1 47102f			//只需要写版本号前面的若干数字
+	git commit -m "second version, transfer int value between java and c" //提交并打标签
+	git tag v2						//打标签打到当前HEAD
+	git -a v0.1 -m "message" 470125		//用-a指定标签名，-m指定说明文字
+6.查看已有的标签
+	git tag
+7.取出指定的版本
+	git checkout <tag_name> 或 git checkout <commit id>
+8.查看仓库的当前状态
+	git status
+9.版本回退
+	git reset --hard HEAD^   //HEAD表示当前版本,上一个版本就是HEAD^，上上一个版本就是HEAD^^,还可以写成HEAD~100
+	git reset --hard 版本号
+10.查看历史操作记录
+	git reflog
+11.撤销修改
+	git checkout -- file		//若文件添加到了暂存区，则回到添加暂存区后的状态，--很重要，没有--，就变成了“切换到另一个分支”的命令
+	git reset HEAD file			//把暂存区的修改撤销掉
+12.删除版本库中的文件
+	git rm files						//先git rm 后git commit
+	git commit
+13.创建并切换分支
+	git checkout -b dev			//-b参数表示创建并切换
+	or
+	git branch dev
+	git checkout dev
+	git checkout master			//切换到主分支
+14.查看当前分支
+	git branch							//列出所有分支，当前分支前面会标一个*号
+15.和并到当前分支
+	git merge dev	
+16.删除分支
+	git branch -d dev
+17.查看标签信息
+	git show v1
+18.删除标签
+	git tag -d v1
+19.删除远程标签
+	git tag -d v1						//先删掉本地标签
+	git push origin :refs/tags/v0.9		//然后从远程删掉
+	
+	
+二.远程仓库操作
+1.创建SSH Key
+	ssh-keygen -t rsa -C "yukonjian@126.com"
+2.在GitHub中添加公钥id_rsa.pub
+
+3.提交本地仓库到GitHub
+	git remote add origin git@github.com:yukonjian/notes.git //将本地仓库和远程仓库关联起来
+	git push -u origin master 		//本地仓库的 master 分支推送到 GitHub 上,第一次推送时要加上“-u”选项
+	git push origin [tagname]			//推送单个tag
+	git push origin --tags				//推送所有tag
+4.克隆远程仓库
+	git clone https://github.com/weidongshan/JNIDemo.git
+5.更新本地仓库
+	git pull origin
