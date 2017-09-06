@@ -6,6 +6,7 @@ struct file_operations {
 	ssize_t (*read) (struct file *, char __user *, size_t, loff_t *);
 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+    loff_t (*llseek) (struct file *, loff_t, int);
 }
 例子：
 static struct file_operations backlight_fops = {
@@ -18,11 +19,14 @@ int test_close(struct inode *node, struct file *filp)
 static long  backlight_ioctl(struct file *filep, unsigned int cmd,
                 unsigned long arg)
 ssize_t test_read(struct file *filp, char __user *buf, size_t count, loff_t *offset)
-ssize_t test_write(struct file *filp, const char __user *buf, size_t count, loff_t *offset)  
+ssize_t test_write(struct file *filp, const char __user *buf, size_t count, loff_t *offset) 
+#define SEEK_SET	0	/* seek relative to beginning of file */
+#define SEEK_CUR	1	/* seek relative to current file position */
+#define SEEK_END	2	/* seek relative to end of file */
+loff_t test_llseek (struct file *filp, loff_t offset, int whence)
 ///////////////////////////////////////////////////////////////////////////////////////////////////// 
 static inline unsigned long __must_check copy_to_user(void __user *to, const void *from, unsigned long n)
 static inline unsigned long __must_check copy_from_user(void *to, const void __user *from, unsigned long n)
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////     
 有关ioctal的cmd参数问题
 

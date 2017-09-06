@@ -20,13 +20,6 @@ struct test_t{
 static struct test_t *test;
 static struct class *test_class;
 
-static struct file_operations test_fops = {
-    .owner  =   THIS_MODULE,    /* 这是一个宏，推向编译模块时自动创建的__this_module变量 */
-    .open   =   test_open, 
-    .close	=		test_close,
-    .unlocked_ioctl  =   test_ioctl, 
-};
-
 static int test_open(struct inode *inode, struct file *file)
 {
 		return 0;
@@ -45,6 +38,7 @@ ssize_t test_read(struct file *filp, char __user *buf, size_t count, loff_t *off
 		retval = count;
 		dprintk("the read success,%s \n",__FUNCTION__);
 	}
+	dprintk("the read offset data is: %d \n", *offset);
 	return reaval;
 }
 ssize_t test_write(struct file *filp, const char __user *buf, size_t count, loff_t *offset)  
@@ -57,8 +51,24 @@ ssize_t test_write(struct file *filp, const char __user *buf, size_t count, loff
 		retval = count;
 		dprintk("the write data: %s \n",data);
 	}
+	dprintk("the write offset data is: %d \n", *offset);
 	return reaval;
 }
+
+loff_t test_llseek (struct file *filp, loff_t offset, int whence)
+{
+	return 0;
+}
+
+static struct file_operations test_fops = {
+    .owner  =   THIS_MODULE,    /* 这是一个宏，推向编译模块时自动创建的__this_module变量 */
+    .open   =   test_open, 
+    .close	=		test_close,
+    .unlocked_ioctl  =   test_ioctl, 
+    .llseek	=	test_lseek,
+};
+
+
 
 static int __init test_init(void)
 {
