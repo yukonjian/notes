@@ -17,6 +17,12 @@ static int backlight_open(struct inode *inode, struct file *file)
 int test_close(struct inode *node, struct file *filp)
 static long  backlight_ioctl(struct file *filep, unsigned int cmd,
                 unsigned long arg)
+ssize_t test_read(struct file *filp, char __user *buf, size_t count, loff_t *offset)
+ssize_t test_write(struct file *filp, const char __user *buf, size_t count, loff_t *offset)  
+///////////////////////////////////////////////////////////////////////////////////////////////////// 
+static inline unsigned long __must_check copy_to_user(void __user *to, const void *from, unsigned long n)
+static inline unsigned long __must_check copy_from_user(void *to, const void __user *from, unsigned long n)
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////     
 有关ioctal的cmd参数问题
 

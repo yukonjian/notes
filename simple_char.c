@@ -36,6 +36,29 @@ static int test_close(struct inode *node, struct file *filp)
 {
 		return 0;
 }
+ssize_t test_read(struct file *filp, char __user *buf, size_t count, loff_t *offset)
+{
+	int retval;
+	if(copy_to_user(buf,"This is a test read",count){
+		retval = -EFAULT;
+	}else{
+		retval = count;
+		dprintk("the read success,%s \n",__FUNCTION__);
+	}
+	return reaval;
+}
+ssize_t test_write(struct file *filp, const char __user *buf, size_t count, loff_t *offset)  
+{
+	int retval;
+	char *data;
+	if(copy_from_user(data,buf,count){
+		retval = -EFAULT;
+	}else{
+		retval = count;
+		dprintk("the write data: %s \n",data);
+	}
+	return reaval;
+}
 
 static int __init test_init(void)
 {
@@ -43,7 +66,7 @@ static int __init test_init(void)
 	
 	test = kamlloc(sizeof(struct test_t),GFP_KERNEL);
 	if(!test)
-		return -ERMEM;
+		return -ENOMEM;
 		
 	retval = alloc_chrdev_region(test->devno, 0, 1, "test"); 
 	if(retval < 0)
@@ -55,9 +78,14 @@ static int __init test_init(void)
 		goto cdev_add_failed;
 		
 	test_class = class_create(THIS_MODULE, "test_class");
-		if(IS_ERR(test_class))
+		if(IS_ERR(test_class)){
+		retval = PTR_ERR(test_class);
 		goto class_create_failed;
+	}
 	device_create(test_class, NULL, test->devno, NULL, "%s", "test_led");
+
+	
+	return 0;
 			
 	class_create_failed:
 		cdev_del(&test->test_cdev);
@@ -67,6 +95,8 @@ static int __init test_init(void)
 	
 	alloc_devno_failed:
 		kfree(test);
+		
+		return retval
 }
 
 static void __exit test_exit(void)
