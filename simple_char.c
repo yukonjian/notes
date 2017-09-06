@@ -6,7 +6,10 @@
 #include <asm/uaccess.h>
 #include <linux/errno.h>
 
-extern int pat_debug_enable;
+//#include <linux/mm.h>
+#include <linux/device.h>
+
+static int pat_debug_enable = 1;
 
 #define dprintk(fmt, arg...) \
 	do { if (pat_debug_enable) printk(KERN_DEBUG fmt, ##arg); } while (0)
@@ -32,27 +35,29 @@ static int test_close(struct inode *node, struct file *filp)
 ssize_t test_read(struct file *filp, char __user *buf, size_t count, loff_t *offset)
 {
 	int retval;
-	if(copy_to_user(buf,"This is a test read",count){
+	dprintk("the read offset data is: %ld /n", *offset);
+	if(copy_to_user(buf,"This is a test read",count)){
 		retval = -EFAULT;
 	}else{
 		retval = count;
 		dprintk("the read success,%s \n",__FUNCTION__);
 	}
-	dprintk("the read offset data is: %d \n", *offset);
-	return reaval;
+	dprintk("the read offset data is: %ld /n", *offset);
+	return retval;
 }
 ssize_t test_write(struct file *filp, const char __user *buf, size_t count, loff_t *offset)  
 {
 	int retval;
-	char *data;
-	if(copy_from_user(data,buf,count){
+	char data[50];
+	dprintk("the write offset data is: %ld /n", *offset);
+	if(copy_from_user(data,buf,count)){
 		retval = -EFAULT;
 	}else{
 		retval = count;
-		dprintk("the write data: %s \n",data);
+		dprintk("the write data: %s /n",data);
 	}
-	dprintk("the write offset data is: %d \n", *offset);
-	return reaval;
+	dprintk("the write offset data is: %ld /n", *offset);
+	return retval;
 }
 
 loff_t test_llseek (struct file *filp, loff_t offset, int whence)
@@ -63,9 +68,10 @@ loff_t test_llseek (struct file *filp, loff_t offset, int whence)
 static struct file_operations test_fops = {
     .owner  =   THIS_MODULE,    /* 这是一个宏，推向编译模块时自动创建的__this_module变量 */
     .open   =   test_open, 
-    .close	=		test_close,
-    .unlocked_ioctl  =   test_ioctl, 
-    .llseek	=	test_lseek,
+    .release=		test_close,
+	.read	=	test_read,
+	.write	=	test_write,
+    
 };
 
 
@@ -73,12 +79,12 @@ static struct file_operations test_fops = {
 static int __init test_init(void)
 {
 	int retval;
-	
-	test = kamlloc(sizeof(struct test_t),GFP_KERNEL);
+	dprintk("the start init \n");
+	test = kmalloc(sizeof(struct test_t),GFP_KERNEL);
 	if(!test)
 		return -ENOMEM;
 		
-	retval = alloc_chrdev_region(test->devno, 0, 1, "test"); 
+	retval = alloc_chrdev_region(&test->devno, 0, 1, "test"); 
 	if(retval < 0)
 		goto alloc_devno_failed;
 		
@@ -92,7 +98,8 @@ static int __init test_init(void)
 		retval = PTR_ERR(test_class);
 		goto class_create_failed;
 	}
-	device_create(test_class, NULL, test->devno, NULL, "%s", "test_led");
+//	device_create(test_class, NULL, test->devno, NULL, "test_led");
+	class_device_create(test_class, NULL, test->devno, NULL, "test_led");
 
 	
 	return 0;
@@ -106,7 +113,7 @@ static int __init test_init(void)
 	alloc_devno_failed:
 		kfree(test);
 		
-		return retval
+		return retval;
 }
 
 static void __exit test_exit(void)
