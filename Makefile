@@ -8,6 +8,6 @@ clean:
 	make -C $(KERN_DIR) M=`pwd`  modules clean
 
 
-obj-m	+=  sunxi_ledtest.o
-sunxi_ledtest-objs := sunxi_led.o
+obj-m	+=  simple_char.o
+
 

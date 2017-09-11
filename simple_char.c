@@ -6,7 +6,8 @@
 #include <asm/uaccess.h>
 #include <linux/errno.h>
 
-//#include <linux/mm.h>
+
+#include <linux/slab.h>
 #include <linux/device.h>
 
 static int pat_debug_enable = 1;
@@ -14,7 +15,8 @@ static int pat_debug_enable = 1;
 #define dprintk(fmt, arg...) \
 	do { if (pat_debug_enable) printk(KERN_DEBUG fmt, ##arg); } while (0)
 		
-
+#define BUF_SIZE	10
+char data[BUF_SIZE];
 struct test_t{
 	dev_t devno;
 	struct cdev test_cdev;
@@ -35,35 +37,55 @@ static int test_close(struct inode *node, struct file *filp)
 ssize_t test_read(struct file *filp, char __user *buf, size_t count, loff_t *offset)
 {
 	int retval;
-	dprintk("the read offset data is: %ld /n", *offset);
-	if(copy_to_user(buf,"This is a test read",count)){
+	dprintk("the read start \n");
+	if(*offset > BUF_SIZE)
+		return - ENXIO;
+	else if( count > *offset)
+	{
+		count = *offset;
+	}	
+	dprintk("the read offset data is: %lld \n", *offset);
+	
+	if(copy_to_user(buf,data,count)){
 		retval = -EFAULT;
 	}else{
 		retval = count;
-		dprintk("the read success,%s \n",__FUNCTION__);
+		*offset -= count;
+		dprintk("the read success,%s \n",data);
 	}
-	dprintk("the read offset data is: %ld /n", *offset);
+	dprintk("the read offset data is: %lld \n", *offset);
+	dprintk("the read end \n");
 	return retval;
 }
 ssize_t test_write(struct file *filp, const char __user *buf, size_t count, loff_t *offset)  
 {
 	int retval;
-	char data[50];
-	dprintk("the write offset data is: %ld /n", *offset);
+	dprintk("the write start \n");
+	
+	if(*offset > BUF_SIZE)
+		return - ENXIO;
+	else if( *offset + count > BUF_SIZE)
+	{
+		count = BUF_SIZE - *offset;
+	}	
+
+	dprintk("the write offset data is: %lld \n", *offset);
 	if(copy_from_user(data,buf,count)){
 		retval = -EFAULT;
 	}else{
 		retval = count;
-		dprintk("the write data: %s /n",data);
+		*offset += count;
+		dprintk("the write data: %s \n",data);
 	}
-	dprintk("the write offset data is: %ld /n", *offset);
+	dprintk("the write offset data is: %lld \n", *offset);
+	dprintk("the write end \n");	
 	return retval;
 }
 
 loff_t test_llseek (struct file *filp, loff_t offset, int whence)
 {
 //	loff_t new_offset;
-	dprintk("the write offset data is: %ld /n", offset);
+	dprintk("the write offset data is: %lld \n", offset);
 	return 0;
 }
 
@@ -100,8 +122,8 @@ static int __init test_init(void)
 		retval = PTR_ERR(test_class);
 		goto class_create_failed;
 	}
-//	device_create(test_class, NULL, test->devno, NULL, "test_led");
-	class_device_create(test_class, NULL, test->devno, NULL, "test_led");
+	device_create(test_class, NULL, test->devno, NULL, "test_led");
+//	class_device_create(test_class, NULL, test->devno, NULL, "test_led");
 
 	
 	return 0;
@@ -120,6 +142,7 @@ static int __init test_init(void)
 
 static void __exit test_exit(void)
 {
+	dprintk("the start exit \n");
 	device_destroy(test_class, test->devno); //注销类设备
 	class_destroy(test_class); //注销类
 	
@@ -129,3 +152,4 @@ static void __exit test_exit(void)
 }
 module_init(test_init);
 module_exit(test_exit);
+MODULE_LICENSE("GPL");
