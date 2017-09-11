@@ -62,6 +62,8 @@ ssize_t test_write(struct file *filp, const char __user *buf, size_t count, loff
 
 loff_t test_llseek (struct file *filp, loff_t offset, int whence)
 {
+//	loff_t new_offset;
+	dprintk("the write offset data is: %ld /n", offset);
 	return 0;
 }
 
@@ -69,9 +71,9 @@ static struct file_operations test_fops = {
     .owner  =   THIS_MODULE,    /* 这是一个宏，推向编译模块时自动创建的__this_module变量 */
     .open   =   test_open, 
     .release=		test_close,
-	.read	=	test_read,
-	.write	=	test_write,
-    
+		.read	=	test_read,
+		.write	=	test_write,
+    .llseek =	test_llseek,
 };
 
 
