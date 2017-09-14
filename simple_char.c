@@ -38,11 +38,11 @@ ssize_t test_read(struct file *filp, char __user *buf, size_t count, loff_t *off
 {
 	int retval;
 	dprintk("the read start \n");
-	if(*offset > BUF_SIZE)
-		return - ENXIO;
-	else if( count > *offset)
+	if(*offset >= BUF_SIZE)
+		return count ? - ENXIO : 0;
+	else if( *offset + count > BUF_SIZE)
 	{
-		count = *offset;
+		count = BUF_SIZE - *offset;
 	}	
 	dprintk("the read offset data is: %lld \n", *offset);
 	
@@ -50,7 +50,7 @@ ssize_t test_read(struct file *filp, char __user *buf, size_t count, loff_t *off
 		retval = -EFAULT;
 	}else{
 		retval = count;
-		*offset -= count;
+		*offset += count;
 		dprintk("the read success,%s \n",data);
 	}
 	dprintk("the read offset data is: %lld \n", *offset);
@@ -62,8 +62,8 @@ ssize_t test_write(struct file *filp, const char __user *buf, size_t count, loff
 	int retval;
 	dprintk("the write start \n");
 	
-	if(*offset > BUF_SIZE)
-		return - ENXIO;
+	if(*offset >= BUF_SIZE)
+		return count ? - ENXIO : 0;
 	else if( *offset + count > BUF_SIZE)
 	{
 		count = BUF_SIZE - *offset;
@@ -84,17 +84,39 @@ ssize_t test_write(struct file *filp, const char __user *buf, size_t count, loff
 
 loff_t test_llseek (struct file *filp, loff_t offset, int whence)
 {
-//	loff_t new_offset;
-	dprintk("the write offset data is: %lld \n", offset);
-	return 0;
+	loff_t new_pos;					//新偏移量
+	loff_t old_pos = filp->f_pos;	//旧偏移量
+
+	switch(whence){
+		case SEEK_SET:
+			new_pos = offset;
+			break;
+		case SEEK_CUR:
+			new_pos = old_pos + offset;
+			break;
+		case SEEK_END:
+			new_pos = BUF_SIZE + offset;
+			break;
+		default:
+			dprintk("unknow whence \n");	
+			return - EINVAL;
+	}
+
+	if(new_pos < 0 || new_pos > BUF_SIZE){	//如果偏移量越界，返回错误号
+		dprintk("offset failed \n");
+		return - EINVAL;
+	}
+
+	filp->f_pos = new_pos;
+	return new_pos;							//正确返回新的偏移量
 }
 
 static struct file_operations test_fops = {
     .owner  =   THIS_MODULE,    /* 这是一个宏，推向编译模块时自动创建的__this_module变量 */
     .open   =   test_open, 
     .release=		test_close,
-		.read	=	test_read,
-		.write	=	test_write,
+	.read	=	test_read,
+	.write	=	test_write,
     .llseek =	test_llseek,
 };
 

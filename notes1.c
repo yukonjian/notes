@@ -173,6 +173,9 @@ SystemServer.java路径：frameworks/base/services/java/com/android/server/SystemSe
 Java: frameworks/base/services/core/java/com/android/server/lights/LightsService.java
 JNI: frameworks/base/services/core/jni/com_android_server_lights_LightsService.cpp
 Hal:  lights.c
+/* android input */
+frameworks/native/services/inputflinger/InputReader.cpp
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 设备驱动
 总线：
@@ -299,3 +302,5 @@ struct of_device_id
 查看模块的版本信息
 modinfo
 dmesg 	//查看内核的输出信息
+查看android的输入子系统的配置
+adb shell dumpsys input

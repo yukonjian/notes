@@ -14,8 +14,10 @@ int main(void)
 		return -1;
 	}
 
-	count = write(fd, "123456789", sizeof("12345678912"));
+	count = write(fd, "123456789", 10);
 	printf("the write function count is %d buf is %s \n",count,buf);	
+	
+	lseek(fd, 5, SEEK_SET);
 
 	count = read(fd, buf, 5);
 	printf("the read function count is %dbuf is %s\n",count, buf);
