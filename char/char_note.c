@@ -28,6 +28,9 @@ static int test_open(struct inode *inode, struct file *file)
  *
  */
 #define container_of(ptr, type, member)
+example:
+devp = container_of(inode->i_cdev, struct test_t, test_cdev);
+filp->private_data = devp;
 
 /*************************************************************/
 /* close */
@@ -55,6 +58,21 @@ loff_t test_llseek (struct file *filp, loff_t offset, int whence)
 #define SEEK_END	2	/* seek relative to end of file */
 
 /*************************************************************/
+/* ioctal */
+int test_ioctl (struct inode *node, struct file *filp, unsigned int cmd, unsigned long arg)
+_IO(type,nr) //没有参数的命令
+_IOR(type,nr,size) //该命令是从驱动读取数据
+_IOW(type,nr,size) //该命令是从驱动写入数据
+_IOWR(type,nr,size) //双向数据传输
+type:幻数  nr:序数  size:数据大小，只需要填写数据类型 example:int,struct test;
+_IOC_DIR(cmd) //从命令中提取方向
+_IOC_TYPE(cmd) //从命令中提取幻数
+_IOC_NR(cmd) //从命令中提取序数
+_IOC_SIZE(cmd) //从命令中提取数据大小
+参数arg可以传递 数据或指针，在传递指针时要进行数据的拷贝：copy_from_user, copy_to_user
+copy_from_user(&val, (struct ioctl_data *)arg, sizeof(struct ioctl_data))
+
+/*************************************************************/
 /* init */
 int alloc_chrdev_region(dev_t *dev, unsigned baseminor, unsigned count,
 			const char *name)
@@ -71,5 +89,81 @@ static inline void __iomem *ioremap(phys_addr_t offset, unsigned long size)
 static inline void iounmap(void __iomem *addr)
 
 /*************************************************************/
+/* 中断 */
+int request_irq(unsigned int irq, irq_handler_t handler, unsigned long flags,
+	    const char *name, void *dev_id)
+typedef irqreturn_t (*irq_handler_t)(int, void *);
+static irqreturn_t intr_handler(int irq, void *dev_id)
+enum irqreturn {
+	IRQ_NONE		= (0 << 0),
+	IRQ_HANDLED		= (1 << 0),
+	IRQ_WAKE_THREAD		= (1 << 1),
+};
+typedef enum irqreturn irqreturn_t;
+flags:
+#define IRQF_TRIGGER_RISING	0x00000001
+#define IRQF_TRIGGER_FALLING	0x00000002
+#define IRQF_TRIGGER_HIGH	0x00000004
+#define IRQF_TRIGGER_LOW	0x00000008
+name:
+显示在/proc/interrupts	
+17: 11 s3c-ext0 key INT_EINT1 显示我注册和中断名字
+第一处：S3C2440所有的中断号在原来的基值上加了16构成中断号
+第二列“11”是对应处理器响应该中断的次数。
+第三列“s3c-ext0”是处理这个中断的中断控制器
+第四列一看就知道调用irq_request()时定义的中断名字。
+有关第二列，当中断是硬件共享的时候，第二列为共享中断号（也可以直接使用内核分开的中断号），通过中断函数的第一个参数带入
+dev_id:
+分享中断，flags 要设置 IRQF_SHARED, 带入不同的dev_id注册中断
+返回值：
+成功返回0，失败返回错误码
+
+void free_irq(unsigned int irq, void *dev_id)
+
+/*************************************************************/
+/* 工作队列 */
+工作队列运行在进程空间，可以休眠
+1.创建工作队列，第二个用于多内核
+struct workqueue_struct *create_workqueue(const char *name)
+struct workqueue_struct *create_singlethread_workqueue(const char *name)
+2.创建工作
+	静态创建,定义并初始化一个work_struct工作结构体
+#define	DECLARE_WORK(work_struct,func)
+static void func(struct work_struct *work);
+	动态创建,需要先定义一个struct work_struct 工作结构体，再将其指针带入进行初始化
+#define INIT_WORK(work_structp, func)	
+3.调度工作
+int queue_work(struct workqueue_struct *wq, struct work_struct *work)
+4.在卸载模块是，需刷新并注销工作队列
+void flush_workqueue(struct workqueue_struct *wq)
+void destroy_workqueue(struct workqueue_struct *wq)
+5.使用系统的工作队列
+static inline bool schedule_work(struct work_struct *work)
+{
+	return queue_work(system_wq, work);
+}
+
+/*************************************************************/
+/* 等待队列 */
+让程序进入休眠，等待程序再次被唤醒
+1.定义并初始化等待队列头
+typedef struct __wait_queue_head wait_queue_head_t;
+#define init_waitqueue_head(qp)
+2.进程进入休眠
+#define wait_event_interruptible(wq, condition)	
+返回0：正常被唤醒；
+返回非0：休眠被中断，驱动返回 -ERESTARTSYS
+wait_event_interruptible_timeout(queue, condition, timeout)
+返回0：正常被唤醒和时间超时；
+返回非0：休眠被中断，驱动返回 -ERESTARTSYS
+3.唤醒进程
+void wake_up_interruptible(wait_queue_head_t *queue);
+
+/*************************************************************/
+
+
+
+
+
 
 

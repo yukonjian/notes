@@ -8,8 +8,11 @@
 #include <asm/uaccess.h>					//copy_to_user, copy_from_user
 #include <linux/errno.h>					//包含了错误号
 
+#include <linux/interrupt.h>			//中断注册函数和中断的触发模式
+
 #include <linux/slab.h>					//内存分配kmalloc
 #include <linux/device.h>				//文件节点类的创建
+
 
 
 

@@ -27,6 +27,9 @@ static struct class *test_class;
 
 static int test_open(struct inode *inode, struct file *file)
 {
+		struct test_t *devp;
+		devp = container_of(inode->i_cdev, struct test_t, test_cdev);
+		filp->private_data = devp;
 		return 0;
 }
 
@@ -111,6 +114,11 @@ loff_t test_llseek (struct file *filp, loff_t offset, int whence)
 	return new_pos;							//正确返回新的偏移量
 }
 
+int test_ioctl (struct inode *node, struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	
+}
+
 static struct file_operations test_fops = {
     .owner  =   THIS_MODULE,    /* 这是一个宏，推向编译模块时自动创建的__this_module变量 */
     .open   =   test_open, 
@@ -144,7 +152,7 @@ static int __init test_init(void)
 		retval = PTR_ERR(test_class);
 		goto class_create_failed;
 	}
-	device_create(test_class, NULL, test->devno, NULL, "test_led");
+	device_create(test_class, NULL, test->devno, NULL, "test_char");
 //	class_device_create(test_class, NULL, test->devno, NULL, "test_led");
 
 	
