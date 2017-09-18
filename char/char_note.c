@@ -153,17 +153,96 @@ typedef struct __wait_queue_head wait_queue_head_t;
 #define wait_event_interruptible(wq, condition)	
 返回0：正常被唤醒；
 返回非0：休眠被中断，驱动返回 -ERESTARTSYS
-wait_event_interruptible_timeout(queue, condition, timeout)
+wait_event_interruptible_timeout(wq, condition, timeout) //timeout = s*HZ;
 返回0：正常被唤醒和时间超时；
 返回非0：休眠被中断，驱动返回 -ERESTARTSYS
 3.唤醒进程
 void wake_up_interruptible(wait_queue_head_t *queue);
 
 /*************************************************************/
+/* 内核时间与定时器 */
+jiffies(unsigned long)， jiffies/HZ(秒）；
 
+#define time_before_eq(a,b) time_after_eq(b,a)
+time_before(jiffies, delay)  //delay = jiffies + HZ;
+while(time_before(jiffies, delay))
+schedule(); //让出处理器
 
+set_current_state(TASK_INTERRUPTIBLE);
+schedule_timeout(s*HZ);
 
+void udelay(unsigned long usecs);	//该种延时属于忙等待
+void mdelay(unsigned long msecs);
 
+struct timer_list {
+	unsigned long expires; //设置在执行定时器处理函数的时间
+	void (*function)(unsigned long); //定时器处理函数
+	unsigned long data; //处理函数的传参
+}
+
+1.定义并初始化定时器
+struct time_list mytimer;
+#define init_timer(timerp)
+2.初始化定时器结构体的 超时时间 定时器处理函数 处理函数传参
+void timer_func(unsigned long data) //定义定时器处理函数
+my_timer.expires = jiffies + 5*HZ; 
+my_timer.function = timer_func; 
+my_timer.data = (unsigned long)99;
+3.激活定时器，只执行一次处理函数
+void add_timer(struct timer_list *timer)
+
+printk("time out![%d] [%s]\n", (int)data, current->comm);  //打印当前进程
+
+4.再次激活定时器
+my_timer.expires = jiffies + 5*HZ; 
+add_timer(&my_timer); 
+or:
+int mod_timer(struct timer_list *timer, unsigned long expires)
+5.若想在定时器没有超时前取消定时器,注销模块时要使用
+int del_timer(struct timer_list *timer)
+
+/*************************************************************/
+/* 信号量 */
+1.定义并初始化
+struct semaphore sem;
+sema_init(&sem, count);
+2.使用信号量
+voud down(struct semaphore *sem)	//如果不能获取，切换状态至TASK_UNINTERRUPTIBLE*/
+int down_interruputible(struct semaphore *sem)	//如果不能获取，切换状态至TASK_INTERRUPTIBLE，如果睡眠期间被中断打断，函数返回非0值*/
+驱动需返回 –ERESTARTSYS;
+void up(struct semaphore *sem);
+
+/*************************************************************/
+/* platform */
+struct platform_device {
+	const char * name; //设备的名字，这将代替device->dev_id，用作sys/device下显示的目录名
+	int id; //设备id，用于给插入给该总线并且具有相同name的设备编号，如果只有一个设备的话填-1。
+	struct device dev; //结构体中内嵌的device结构体。
+	u32 num_resources; //资源数。
+	struct resource * resource; //用于存放资源的数组。
+};
+int platform_device_register(struct platform_device *pdev) //同样的，需要判断返回值
+void platform_device_unregister(struct platform_device *pdev)
+
+struct platform_driver {
+	int (*probe)(struct platform_device *);
+	int (*remove)(struct platform_device *);
+	struct device_driver driver;
+}	 
+int platform_driver_register(struct platform_driver *drv)
+void platform_driver_unregister(struct platform_driver *drv)
+
+./sys/devices/platform/plat_usb_mouse.0
+./sys/bus/platform/devices/plat_usb_mouse.0
+./sys/bus/platform/drivers/plat_usb_mouse
+./sys/bus/platform/drivers/plat_usb_mouse/plat_usb_mouse.0
+
+struct resource {
+	 resource_size_t start;
+	 resource_size_t end;
+	 unsigned long flags;
+}
+flags ：IORESOURCE_MEM  IORESOURCE_IRQ
 
 
 

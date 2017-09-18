@@ -9,9 +9,19 @@
 #include <linux/errno.h>					//包含了错误号
 
 #include <linux/interrupt.h>			//中断注册函数和中断的触发模式
+#include <linux/workqueue.h>			//工作队列头文件
+
+#include <linux/wait.h>					//等待队列头文件
+#include <linux/sched.h>					//调度头文件，schedule，jiffies,add_timer,wake_up
+#include <linux/timer.h>					//定时器相关头文件
+
+#include <linux/platform_device.h>			//平台设备
+#include <linux/ioport.h>				//平台设备资源
 
 #include <linux/slab.h>					//内存分配kmalloc
 #include <linux/device.h>				//文件节点类的创建
+
+#include <asm/current.h>					//current
 
 
 
