@@ -1,0 +1,17 @@
+android 打包过程测试
+1.将simple.ko文件拷贝到out
+2.进入android配置环境，执行extract-bsp, pack
+结果 系统中并未添加入simple.ko
+
+3.在Android编译的输出out/.../t3-p1下修改init.rc文件，和拷贝simple.ko，再pack
+结果 init.rc文件并未修改，simple.ko并不存在
+
+4.执行make snod 生成system.img ,再pack
+结果 生成了system.img印象文件，打包烧写后，simple.ko已存在，但是init.rc文件并未修改
+5.执行make bootimage 生成boot.img,再pack
+结果 init.rc文件修改成功
+6.编译的bimage ,拷贝到android的输出目录中，并改名为kernel,执行make bootimage
+结果 内核成功编译到了bootimage,加入内核的打印信息在dmesg中已经看到
+
+总结：bootimage.img包含了linux内核映象和及一些配置信息
+      system.img包含了整个/system目录
