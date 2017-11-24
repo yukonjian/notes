@@ -45,6 +45,7 @@ struct v4l2_subdev_ops {
 //视频设备的特有操作：设置帧率、裁剪图像、开关视频流等
          conststruct v4l2_subdev_video_ops      *video;
 };
+void v4l2_subdev_init(struct v4l2_subdev *sd, const struct v4l2_subdev_ops *ops)
 int v4l2_device_register_subdev(struct v4l2_device*v4l2_dev, struct v4l2_subdev *sd)
 void v4l2_device_unregister_subdev(struct v4l2_subdev*sd)
 /******************************************************************************************************************************************/
@@ -80,6 +81,7 @@ struct video_device
 	const struct v4l2_ioctl_ops *ioctl_ops;
 };
 struct video_device *video_device_alloc(void)
+video_register_device
 void video_device_release(struct video_device *vdev)
 static inline int __must_check video_register_device(struct video_device *vdev, int type, int nr)
 void video_unregister_device(struct video_device *vdev);
@@ -98,6 +100,10 @@ struct v4l2_ctrl *v4l2_ctrl_new_std(structv4l2_ctrl_handler *hdl,
                             conststruct v4l2_ctrl_ops *ops,
                             u32 id, s32 min, s32 max, u32 step, s32 def)
 id是通过IOCTL的arg参数传过来的指令，定义在v4l2-controls.h文件；
+｛
+	v4l2_ctrl_handler_init(hdl, 37 + ARRAY_SIZE(custom_ctrls));
+	v4l2_ctrl_new_std(hdl, &vfe_ctrl_ops, V4L2_CID_BRIGHTNESS, 0, 255, 1, 128);
+｝
 /******************************************************************************************************************************************/
 ioctl框架
 用户空间通过打开/dev/目录下的设备节点，获取到文件的file结构体，通过系统调用ioctl把cmd和arg传入到内核。通过一系列的调用后最终会调用到__video_do_ioctl函数，

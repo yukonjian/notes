@@ -162,11 +162,15 @@ static inline long PTR_ERR(const void *ptr)
          return (long) ptr;
 }
 /* 判断返回的指针是错误信息还是实际地址，即指针是否落在最后一页 */
-static inline long IS_ERR(const void *ptr)
+static inline long IS_ERR(const void *ptr)		
 {
          return IS_ERR_VALUE((unsigned long)ptr);
 }
 对于内核中返回的指针，检查错误的方式不是if(!retptr)，而是if( IS_ERR(retptr) 或 If( IS_ERR_VALUE(retptr) )。
+static inline long __must_check IS_ERR_OR_NULL(const void *ptr)
+{
+       return !ptr || IS_ERR_VALUE((unsigned long)ptr);
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 有关android一些文件在源码中的路径
 SystemServer.java路径：frameworks/base/services/java/com/android/server/SystemServer.java
@@ -314,3 +318,71 @@ adb push E:\room\simple		/system 			//推送文件夹里的所有文件
 adb pull <remote> <local>
 adb pull /system/simple/simple.ko		E:\room\simple
 adb pull /system/simple		E:\room\simple	//推送文件夹里的所有文件
+	
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+在编译时将函数都静态编译到程序中
+arm-none-linux-gnueabi-gcc -static -o hello hello.c
+在android中使用NDK提供的android工具链，添加-pie -fPIE，非静态编译也可以运行。
+arm-linux-androideabi-gcc -pie -fPIE -o helloa hello.c
+arm-linux-androideabi-gcc -pie -fPIE -o ov9732app ov9732_app.c
+arm-linux-androideabi-gcc -pie -fPIE -o getbuffer getbuffer.c
+
+<include/linux/jiffies.h> 
+unsigned int jiffies_to_msecs(const unsigned long j);  
+unsigned int jiffies_to_usecs(const unsigned long j);  
+unsigned long msecs_to_jiffies(const unsigned int m);  
+unsigned long usecs_to_jiffies(const unsigned int u);  
+
+“error: expected expression before ‘struct’”错误，此错误一般是由未定义的宏（宏里套宏）或参量引起，导致编译器判断当前语句为非法语句，
+1、缺少ioctl.h头文件
+调用ioctl函数，用到参数VIDIOC_QUERYCAP时无法编译通过。
+#include <sys/ioctl.h>
+
+函数原型：void *calloc(size_t n, size_t size)；
+在内存的动态存储区中分配n个长度为size的连续空间，函数返回一个指向分配起始地址的指针；如果分配不成功，返回NULL。
+n: Number of elements成员数量 size: Length in bytes of each element每个成员字节长度
+
+enum v4l2_buf_type {
+	V4L2_BUF_TYPE_VIDEO_CAPTURE        = 1,
+	V4L2_BUF_TYPE_VIDEO_OUTPUT         = 2,
+	V4L2_BUF_TYPE_VIDEO_OVERLAY        = 3,
+};
+
+enum v4l2_memory {
+	V4L2_MEMORY_MMAP             = 1,
+	V4L2_MEMORY_USERPTR          = 2,
+	V4L2_MEMORY_OVERLAY          = 3,
+	V4L2_MEMORY_DMABUF           = 4,
+};
+
+头文件 <sys/mman.h>
+函数原型
+void* mmap(void* start,size_t length,int prot,int flags,int fd,off_t offset);
+int munmap(void* start,size_t length);
+mmap(NULL /* start anywhere */, buf.length, PROT_READ | PROT_WRITE /* required */,
+        																MAP_SHARED /* recommended */, fd, buf.m.offset);
+start：映射区的开始地址，设置为0时表示由系统决定映射区的起始地址。
+length：映射区的长度。//长度单位是 以字节为单位，不足一内存页按一内存页处理
+prot：期望的内存保护标志，不能与文件的打开模式冲突。是以下的某个值，可以通过or运算合理地组合在一起
+PROT_READ //页内容可以被读取
+PROT_WRITE //页可以被写入
+flags：指定映射对象的类型，映射选项和映射页是否可以共享。
+MAP_SHARED
+被映射文件开头offset个字节开始算起
+
+
+struct list_head {
+	struct list_head *next, *prev;
+};
+static inline void list_add_tail(struct list_head *new, struct list_head *head)
+{
+	__list_add(new, head->prev, head);
+}
+
+static inline void platform_set_drvdata(struct platform_device *pdev,
+					void *data)
+{
+	dev_set_drvdata(&pdev->dev, data);  //dev->p->driver_data = data;
+}
+
+grep -r xxx ./
